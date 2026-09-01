@@ -259,8 +259,9 @@
                 <div>
                     <label>Reisezeit Fahrer</label>
                     <select name="rz_fahrer[]">
-                        <option value="Nein">Nein</option>
-                        <option value="Ja">Ja</option>
+                        <option value="0">Keine</option>
+                        <option value="0.5">Halbe (0.5)</option>
+                        <option value="1.0">Ganze (1.0)</option>
                     </select>
                 </div>
                 <div>
@@ -447,8 +448,9 @@
                 <div>
                     <label>Reisezeit Fahrer</label>
                     <select name="rz_fahrer[]">
-                        <option value="Nein" ${data && data.rz_fahrer === 'Nein' ? 'selected' : ''}>Nein</option>
-                        <option value="Ja" ${data && data.rz_fahrer === 'Ja' ? 'selected' : ''}>Ja</option>
+                        <option value="0" ${data && data.rz_fahrer === '0' ? 'selected' : ''}>Keine</option>
+                        <option value="0.5" ${data && data.rz_fahrer === '0.5' ? 'selected' : ''}>Halbe (0.5)</option>
+                        <option value="1.0" ${data && data.rz_fahrer === '1.0' ? 'selected' : ''}>Ganze (1.0)</option>
                     </select>
                 </div>
                 <div>
@@ -748,8 +750,8 @@
                             });
                         }
 
-                        row.push(e.reisezeit);
-                        row.push(e.rz_fahrer || 'Nein');
+                        row.push(e.reisezeit || '0');
+                        row.push(e.rz_fahrer || '0');
                         row.push(e.mittagszulage);
                         row.push(e.begruendung || '');
 
@@ -761,7 +763,7 @@
 
             doc.autoTable({
                 startY: 34,
-                head: [['Datum', 'Baustelle', 'KTR', 'Zeiten', 'Std', 'Tagestotal', 'RZ', 'Fahrer', 'ME', 'Begründung']],
+                head: [['Datum', 'Baustelle', 'KTR', 'Zeiten', 'Std', 'Tagestotal', 'RZ', 'RZ Fahrer', 'ME', 'Begründung']],
                 body: tableRows,
                 theme: 'grid',
                 headStyles: { fillColor: [0, 86, 179] },

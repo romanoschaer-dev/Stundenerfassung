@@ -1,0 +1,737 @@
+html_content = """<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stundenkarte Erfassung</title>
+    <!-- Bibliotheken für PDF-Erstellung -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #f4f6f8; 
+            margin: 0; 
+            padding: 15px; 
+            color: #333; 
+        }
+        .card { 
+            background: #fff; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .entry-header h3 {
+            margin: 0;
+        }
+        h3 { margin-top: 0; color: #111; }
+        label { 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #555; 
+            display: block; 
+            margin-top: 8px; 
+        }
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            margin-top: 4px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 14px; 
+        }
+        .row { display: flex; gap: 10px; }
+        .row > div { flex: 1; }
+        
+        .worker-row { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            margin-top: 6px; 
+        }
+        .worker-row input { 
+            flex: 1; 
+            margin-top: 0; 
+        }
+        .btn-remove { 
+            background: #dc3545; 
+            color: white; 
+            border: none; 
+            height: 40px;
+            width: 40px;
+            min-width: 40px;
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+        .btn-delete-entry {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
+
+        .time-block {
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            padding: 8px 10px 10px 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+        .time-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #0056b3;
+            margin-bottom: 2px;
+        }
+
+        .subtotal-box {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            color: #333;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .total-card {
+            background: #0056b3;
+            color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-card h3 { margin: 0; color: white; font-size: 16px; }
+        .total-card .hours { font-size: 22px; font-weight: bold; }
+
+        .copy-option-box {
+            background: #eef2f5;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .copy-option-box input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+        }
+        .copy-option-box label {
+            margin: 0;
+            font-size: 13px;
+            color: #222;
+            cursor: pointer;
+        }
+
+        .saved-days-card {
+            background: #eef6ff;
+            border: 1px solid #b6d4fe;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .day-list-item {
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 6px;
+            font-size: 13px;
+            border: 1px solid #ddd;
+        }
+
+        button { 
+            width: 100%; 
+            background: #0056b3; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+        }
+        button.add { background: #28a745; margin-bottom: 15px; }
+        button.save-day { background: #17a2b8; margin-top: 10px; }
+        button.next-day { background: #6f42c1; margin-top: 10px; }
+        button.secondary { background: #6c757d; margin-top: 10px; margin-bottom: 0; }
+        button.send-hr { background: #fd7e14; margin-top: 10px; font-size: 17px; }
+    </style>
+</head>
+<body>
+
+<datalist id="mitarbeiter-liste"></datalist>
+<datalist id="baustellen-liste"></datalist>
+
+<form id="timeForm">
+    <div class="card">
+        <h3>Arbeiter auswählen</h3>
+        <label>Beteiligte Mitarbeiter:</label>
+        <div id="workerContainer">
+            <div class="worker-row">
+                <input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="13290 - Schär Romano" onchange="handleNewWorker(this)" required>
+            </div>
+        </div>
+        <button type="button" class="secondary" onclick="addWorkerField()">+ Name hinzufügen</button>
+        
+        <label style="margin-top: 15px;">Datum</label>
+        <input type="date" name="datum" id="datumInput" required>
+    </div>
+
+    <div id="entriesContainer">
+        <div class="card entry-card">
+            <div class="entry-header">
+                <h3>Einsatz 1</h3>
+            </div>
+            <label>Baustelle (Suchfeld)</label>
+            <input type="text" name="baustelle[]" list="baustellen-liste" placeholder="Baustelle tippen..." onchange="handleBaustelleChange(this)" required>
+            
+            <label>KTR (Kostenstelle)</label>
+            <input type="text" name="ktr[]" placeholder="z. B. 51489" onchange="handleKTRChange(this)" required>
+            
+            <div class="time-block">
+                <div class="time-title">Zeitfenster 1</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="von1[]" onchange="calculateHours()" required></div>
+                    <div><label>Bis</label><input type="time" name="bis1[]" onchange="calculateHours()" required></div>
+                </div>
+            </div>
+
+            <div class="time-block">
+                <div class="time-title">Zeitfenster 2 (optional)</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="von2[]" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="bis2[]" onchange="calculateHours()"></div>
+                </div>
+            </div>
+
+            <div class="time-block">
+                <div class="time-title">Zeitfenster 3 (optional)</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="von3[]" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="bis3[]" onchange="calculateHours()"></div>
+                </div>
+            </div>
+
+            <div class="subtotal-box">
+                Stunden dieser Einsatz: <span class="site-hours">00:00</span> Std
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>Reisezeit (RZ)</label>
+                    <select name="reisezeit[]">
+                        <option value="0">Keine</option>
+                        <option value="0.5">Halbe (0.5)</option>
+                        <option value="1.0">Ganze (1.0)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Mittagszulage</label>
+                    <select name="me[]">
+                        <option value="Nein">Nein</option>
+                        <option value="Ja">Ja</option>
+                    </select>
+                </div>
+            </div>
+
+            <label>Begründung / Spezielles (für diese Baustelle)</label>
+            <input type="text" name="begruendung[]" placeholder="Optional">
+        </div>
+    </div>
+
+    <button type="button" class="add" onclick="addEntry()">+ Weitere Baustelle hinzufügen</button>
+
+    <div class="total-card">
+        <h3>Tagestotal:</h3>
+        <div class="hours"><span id="dayTotal">00:00</span> Std</div>
+    </div>
+
+    <button type="button" class="save-day" onclick="saveCurrentDay(true)">Tag zwischenspeichern</button>
+
+    <div class="copy-option-box">
+        <input type="checkbox" id="copyDetailsCheck" checked>
+        <label for="copyDetailsCheck">Mitarbeiter & Baustellen für den nächsten Tag übernehmen (Zeiten leeren)</label>
+    </div>
+
+    <button type="button" class="next-day" onclick="handleNextDay()">+ Weiteren Tag erfassen</button>
+</form>
+
+<div class="saved-days-card" style="margin-top: 15px;">
+    <h3 style="margin-bottom: 5px;">Gespeicherte Tage dieser Woche</h3>
+    <div id="savedDaysList">Keine Tage gespeichert.</div>
+    <button type="button" class="send-hr" onclick="finishWeekAndGeneratePDFs()">Woche abschließen & PDFs erstellen</button>
+</div>
+
+<script>
+    document.getElementById('datumInput').valueAsDate = new Date();
+
+    const defaultKTRMapping = { 
+        "Faulensee": "51489", 
+        "Lütschental": "51449", 
+        "Asterweg": "51496", 
+        "Spiez, NB MFG Bürg 2": "51459" 
+    };
+
+    const defaultWorkers = ["13290 - Schär Romano"];
+
+    function getKTRMapping() {
+        const stored = localStorage.getItem('stundenkarte_ktr_mapping');
+        return stored ? JSON.parse(stored) : defaultKTRMapping;
+    }
+
+    function loadSavedLists() {
+        let savedWorkers = JSON.parse(localStorage.getItem('stundenkarte_mitarbeiter')) || defaultWorkers;
+        let ktrMap = getKTRMapping();
+        let savedBaustellen = Object.keys(ktrMap);
+
+        const workerDatalist = document.getElementById('mitarbeiter-liste');
+        workerDatalist.innerHTML = '';
+        savedWorkers.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            workerDatalist.appendChild(opt);
+        });
+
+        const baustellenDatalist = document.getElementById('baustellen-liste');
+        baustellenDatalist.innerHTML = '';
+        savedBaustellen.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b;
+            baustellenDatalist.appendChild(opt);
+        });
+    }
+
+    function handleNewWorker(element) {
+        const value = element.value.trim();
+        if (!value) return;
+
+        let savedWorkers = JSON.parse(localStorage.getItem('stundenkarte_mitarbeiter')) || defaultWorkers;
+        if (!savedWorkers.includes(value)) {
+            savedWorkers.push(value);
+            localStorage.setItem('stundenkarte_mitarbeiter', JSON.stringify(savedWorkers));
+            loadSavedLists();
+        }
+    }
+
+    function handleBaustelleChange(element) {
+        const selectedSite = element.value.trim();
+        if (!selectedSite) return;
+
+        const entryCard = element.closest('.entry-card');
+        const ktrInput = entryCard.querySelector('input[name="ktr[]"]');
+        const ktrMap = getKTRMapping();
+
+        if (ktrMap[selectedSite]) {
+            ktrInput.value = ktrMap[selectedSite];
+        }
+
+        if (ktrInput.value.trim()) {
+            saveBaustelleWithKTR(selectedSite, ktrInput.value.trim());
+        }
+    }
+
+    function handleKTRChange(element) {
+        const entryCard = element.closest('.entry-card');
+        const baustelleInput = entryCard.querySelector('input[name="baustelle[]"]');
+        const site = baustelleInput.value.trim();
+        const ktr = element.value.trim();
+
+        if (site && ktr) {
+            saveBaustelleWithKTR(site, ktr);
+        }
+    }
+
+    function saveBaustelleWithKTR(site, ktr) {
+        let ktrMap = getKTRMapping();
+        ktrMap[site] = ktr;
+        localStorage.setItem('stundenkarte_ktr_mapping', JSON.stringify(ktrMap));
+        loadSavedLists();
+    }
+
+    function addWorkerField() {
+        const container = document.getElementById('workerContainer');
+        const div = document.createElement('div');
+        div.className = 'worker-row';
+        div.innerHTML = `
+            <input type="text" name="arbeiter[]" list="mitarbeiter-liste" placeholder="Name tippen..." onchange="handleNewWorker(this)" required>
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function addEntry() {
+        const container = document.getElementById('entriesContainer');
+        const count = container.querySelectorAll('.entry-card').length + 1;
+        
+        const newEntry = document.createElement('div');
+        newEntry.className = 'card entry-card';
+        newEntry.innerHTML = `
+            <div class="entry-header">
+                <h3>Einsatz ${count}</h3>
+                <button type="button" class="btn-delete-entry" onclick="removeEntry(this)">✕ Baustelle löschen</button>
+            </div>
+            <label>Baustelle (Suchfeld)</label>
+            <input type="text" name="baustelle[]" list="baustellen-liste" placeholder="Baustelle tippen..." onchange="handleBaustelleChange(this)" required>
+            <label>KTR (Kostenstelle)</label>
+            <input type="text" name="ktr[]" placeholder="z. B. 51489" onchange="handleKTRChange(this)" required>
+            
+            <div class="time-block">
+                <div class="time-title">Zeitfenster 1</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="von1[]" onchange="calculateHours()" required></div>
+                    <div><label>Bis</label><input type="time" name="bis1[]" onchange="calculateHours()" required></div>
+                </div>
+            </div>
+            <div class="time-block">
+                <div class="time-title">Zeitfenster 2 (optional)</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="von2[]" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="bis2[]" onchange="calculateHours()"></div>
+                </div>
+            </div>
+            <div class="time-block">
+                <div class="time-title">Zeitfenster 3 (optional)</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="von3[]" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="bis3[]" onchange="calculateHours()"></div>
+                </div>
+            </div>
+            <div class="subtotal-box">Stunden dieser Einsatz: <span class="site-hours">00:00</span> Std</div>
+            <div class="row">
+                <div>
+                    <label>Reisezeit (RZ)</label>
+                    <select name="reisezeit[]"><option value="0">Keine</option><option value="0.5">Halbe (0.5)</option><option value="1.0">Ganze (1.0)</option></select>
+                </div>
+                <div>
+                    <label>Mittagszulage</label>
+                    <select name="me[]"><option value="Nein">Nein</option><option value="Ja">Ja</option></select>
+                </div>
+            </div>
+            <label>Begründung / Spezielles</label>
+            <input type="text" name="begruendung[]" placeholder="Optional">
+        `;
+        container.appendChild(newEntry);
+        updateEntryNumbers();
+    }
+
+    function removeEntry(button) {
+        const container = document.getElementById('entriesContainer');
+        const cards = container.querySelectorAll('.entry-card');
+        
+        if (cards.length <= 1) {
+            alert("Es muss mindestens eine Baustelle erfasst sein.");
+            return;
+        }
+
+        button.closest('.entry-card').remove();
+        updateEntryNumbers();
+        calculateHours();
+    }
+
+    function updateEntryNumbers() {
+        const cards = document.querySelectorAll('.entry-card');
+        cards.forEach((card, index) => {
+            const header = card.querySelector('.entry-header h3');
+            if (header) {
+                header.textContent = `Einsatz ${index + 1}`;
+            }
+        });
+    }
+
+    function calculateHours() {
+        const cards = document.querySelectorAll('.entry-card');
+        let grandTotalMinutes = 0;
+
+        cards.forEach(card => {
+            let cardMinutes = 0;
+            for (let i = 1; i <= 3; i++) {
+                const von = card.querySelector(`input[name="von${i}[]"]`)?.value;
+                const bis = card.querySelector(`input[name="bis${i}[]"]`)?.value;
+                if (von && bis) {
+                    const [vH, vM] = von.split(':').map(Number);
+                    const [bH, bM] = bis.split(':').map(Number);
+                    let diff = (bH * 60 + bM) - (vH * 60 + vM);
+                    if (diff > 0) cardMinutes += diff;
+                }
+            }
+            const siteHoursSpan = card.querySelector('.site-hours');
+            if (siteHoursSpan) siteHoursSpan.textContent = formatMinutesToHHMM(cardMinutes);
+            grandTotalMinutes += cardMinutes;
+        });
+
+        document.getElementById('dayTotal').textContent = formatMinutesToHHMM(grandTotalMinutes);
+        return grandTotalMinutes;
+    }
+
+    function formatMinutesToHHMM(totalMinutes) {
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    function formatDateToDMY(dateString) {
+        if (!dateString) return '';
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+        return dateString;
+    }
+
+    function saveCurrentDay(showAlert = true) {
+        const datum = document.getElementById('datumInput').value;
+        if (!datum) {
+            if (showAlert) alert('Bitte ein Datum wählen!');
+            return false;
+        }
+
+        const workerInputs = document.querySelectorAll('input[name="arbeiter[]"]');
+        const workers = Array.from(workerInputs).map(i => i.value).filter(v => v !== '');
+
+        const cards = document.querySelectorAll('.entry-card');
+        const einsaetze = [];
+
+        cards.forEach(card => {
+            const site = card.querySelector('input[name="baustelle[]"]').value;
+            const ktr = card.querySelector('input[name="ktr[]"]').value;
+
+            if (site && ktr) {
+                saveBaustelleWithKTR(site, ktr);
+            }
+
+            einsaetze.push({
+                baustelle: site,
+                ktr: ktr,
+                von1: card.querySelector('input[name="von1[]"]').value,
+                bis1: card.querySelector('input[name="bis1[]"]').value,
+                von2: card.querySelector('input[name="von2[]"]').value,
+                bis2: card.querySelector('input[name="bis2[]"]').value,
+                von3: card.querySelector('input[name="von3[]"]').value,
+                bis3: card.querySelector('input[name="bis3[]"]').value,
+                reisezeit: card.querySelector('select[name="reisezeit[]"]').value,
+                mittagszulage: card.querySelector('select[name="me[]"]').value,
+                begruendung: card.querySelector('input[name="begruendung[]"]').value,
+                stundenText: card.querySelector('.site-hours').textContent
+            });
+        });
+
+        const dayRecord = {
+            datum: datum,
+            arbeiter: workers,
+            einsaetze: einsaetze,
+            tagestotalMinutes: calculateHours()
+        };
+
+        let weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
+        weekData = weekData.filter(item => item.datum !== datum);
+        weekData.push(dayRecord);
+        weekData.sort((a,b) => new Date(a.datum) - new Date(b.datum));
+
+        localStorage.setItem('stundenkarte_woche', JSON.stringify(weekData));
+        if (showAlert) alert('Tag (' + formatDateToDMY(datum) + ') wurde erfolgreich zwischengespeichert!');
+        renderSavedDays();
+        return true;
+    }
+
+    function handleNextDay() {
+        const success = saveCurrentDay(false);
+        if (!success) return;
+
+        const copyChecked = document.getElementById('copyDetailsCheck').checked;
+
+        const datumInput = document.getElementById('datumInput');
+        const currentDate = new Date(datumInput.value);
+        currentDate.setDate(currentDate.getDate() + 1);
+        datumInput.valueAsDate = currentDate;
+
+        const timeInputs = document.querySelectorAll('input[type="time"]');
+        timeInputs.forEach(input => input.value = '');
+
+        if (!copyChecked) {
+            const cards = document.querySelectorAll('.entry-card');
+            cards.forEach((card, index) => {
+                if (index === 0) {
+                    card.querySelector('input[name="baustelle[]"]').value = '';
+                    card.querySelector('input[name="ktr[]"]').value = '';
+                    card.querySelector('input[name="begruendung[]"]').value = '';
+                } else {
+                    card.remove();
+                }
+            });
+            updateEntryNumbers();
+        }
+
+        calculateHours();
+        alert('Tag gespeichert! Neues Datum: ' + formatDateToDMY(datumInput.value));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderSavedDays() {
+        const weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
+        const container = document.getElementById('savedDaysList');
+        
+        if (weekData.length === 0) {
+            container.innerHTML = '<div style="font-size:12px; color:#666;">Keine Tage gespeichert.</div>';
+            return;
+        }
+
+        let html = '';
+        weekData.forEach((day, index) => {
+            html += `
+                <div class="day-list-item">
+                    <span><strong>${formatDateToDMY(day.datum)}</strong> (${day.einsaetze.length} Einsatz/Einsätze)</span>
+                    <span><strong>${formatMinutesToHHMM(day.tagestotalMinutes)} Std</strong> 
+                    <a href="#" onclick="removeDay(${index})" style="color:red; margin-left:10px; text-decoration:none;">✕</a></span>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function removeDay(index) {
+        let weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
+        weekData.splice(index, 1);
+        localStorage.setItem('stundenkarte_woche', JSON.stringify(weekData));
+        renderSavedDays();
+    }
+
+    function finishWeekAndGeneratePDFs() {
+        const currentHours = calculateHours();
+        const currentDatum = document.getElementById('datumInput').value;
+        
+        if (currentHours > 0 && currentDatum) {
+            saveCurrentDay(false);
+        }
+
+        const weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
+        if (weekData.length === 0) return alert('Es wurden noch keine Tage zwischengespeichert!');
+
+        let allWorkersSet = new Set();
+        weekData.forEach(day => {
+            if (day.arbeiter && Array.isArray(day.arbeiter)) {
+                day.arbeiter.forEach(w => allWorkersSet.add(w));
+            }
+        });
+        const allWorkersArray = Array.from(allWorkersSet);
+
+        const { jsPDF } = window.jspdf;
+
+        allWorkersArray.forEach(workerName => {
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text("Wochen-Stundenkarte", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Mitarbeiter: ${workerName}`, 14, 23);
+            doc.text(`Erstellt am: ${formatDateToDMY(new Date().toISOString().split('T')[0])}`, 14, 28);
+
+            let tableRows = [];
+            let totalWeekMinutes = 0;
+
+            weekData.forEach(day => {
+                if (day.arbeiter && day.arbeiter.includes(workerName)) {
+                    const formattedDate = formatDateToDMY(day.datum);
+                    const tagestotalFormatted = formatMinutesToHHMM(day.tagestotalMinutes);
+                    const rowCount = day.einsaetze.length;
+
+                    day.einsaetze.forEach((e, index) => {
+                        let zeitenText = `${e.von1}-${e.bis1}`;
+                        if (e.von2 && e.bis2) zeitenText += ` | ${e.von2}-${e.bis2}`;
+                        if (e.von3 && e.bis3) zeitenText += ` | ${e.von3}-${e.bis3}`;
+
+                        let row = [
+                            formattedDate,
+                            e.baustelle,
+                            e.ktr,
+                            zeitenText,
+                            e.stundenText
+                        ];
+
+                        if (index === 0) {
+                            row.push({
+                                content: tagestotalFormatted,
+                                rowSpan: rowCount,
+                                styles: { valign: 'middle', halign: 'center', fontStyle: 'bold' }
+                            });
+                        }
+
+                        row.push(e.reisezeit);
+                        row.push(e.mittagszulage);
+                        row.push(e.begruendung || '');
+
+                        tableRows.push(row);
+                    });
+                    totalWeekMinutes += day.tagestotalMinutes;
+                }
+            });
+
+            doc.autoTable({
+                startY: 34,
+                head: [['Datum', 'Baustelle', 'KTR', 'Zeiten', 'Std', 'Tagestotal', 'RZ', 'ME', 'Begründung']],
+                body: tableRows,
+                theme: 'grid',
+                headStyles: { fillColor: [0, 86, 179] },
+                styles: { fontSize: 8 }
+            });
+
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(12);
+            doc.text(`Gesamttotal Woche: ${formatMinutesToHHMM(totalWeekMinutes)} Std`, 14, finalY);
+
+            const cleanWorkerName = workerName.replace(/[^a-zA-Z0-9]/g, "_");
+            const pdfFileName = `Stundenkarte_${cleanWorkerName}.pdf`;
+            
+            doc.save(pdfFileName);
+        });
+
+        alert(`Es wurden ${allWorkersArray.length} PDF(s) erfolgreich generiert und heruntergeladen.`);
+
+        if (confirm("Möchten Sie die gespeicherte Woche für die nächste Woche zurücksetzen?")) {
+            localStorage.removeItem('stundenkarte_woche');
+            renderSavedDays();
+        }
+    }
+
+    loadSavedLists();
+    renderSavedDays();
+</script>
+
+</body>
+</html>
+"""
+
+with open("stundenkarte.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("HTML File successfully created: stundenkarte.html")

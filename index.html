@@ -1,4 +1,4 @@
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -257,6 +257,13 @@ html_content = """<!DOCTYPE html>
                     </select>
                 </div>
                 <div>
+                    <label>Reisezeit Fahrer</label>
+                    <select name="rz_fahrer[]">
+                        <option value="Nein">Nein</option>
+                        <option value="Ja">Ja</option>
+                    </select>
+                </div>
+                <div>
                     <label>Mittagszulage</label>
                     <select name="me[]">
                         <option value="Nein">Nein</option>
@@ -277,14 +284,14 @@ html_content = """<!DOCTYPE html>
         <div class="hours"><span id="dayTotal">00:00</span> Std</div>
     </div>
 
-    <button type="button" class="save-day" onclick="saveCurrentDay(true)">Tag zwischenspeichern</button>
+    <button type="button" class="save-day" onclick="saveDraftDay()">Tagesformular zwischenspeichern</button>
 
     <div class="copy-option-box">
         <input type="checkbox" id="copyDetailsCheck" checked>
         <label for="copyDetailsCheck">Mitarbeiter & Baustellen für den nächsten Tag übernehmen (Zeiten leeren)</label>
     </div>
 
-    <button type="button" class="next-day" onclick="handleNextDay()">+ Weiteren Tag erfassen</button>
+    <button type="button" class="next-day" onclick="handleNextDay()">+ Tag in Wochenspeicher übernehmen & Nächsten Tag erfassen</button>
 </form>
 
 <div class="saved-days-card" style="margin-top: 15px;">
@@ -379,18 +386,18 @@ html_content = """<!DOCTYPE html>
         loadSavedLists();
     }
 
-    function addWorkerField() {
+    function addWorkerField(val = '') {
         const container = document.getElementById('workerContainer');
         const div = document.createElement('div');
         div.className = 'worker-row';
         div.innerHTML = `
-            <input type="text" name="arbeiter[]" list="mitarbeiter-liste" placeholder="Name tippen..." onchange="handleNewWorker(this)" required>
+            <input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="${val}" placeholder="Name tippen..." onchange="handleNewWorker(this)" required>
             <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
         `;
         container.appendChild(div);
     }
 
-    function addEntry() {
+    function addEntry(data = null) {
         const container = document.getElementById('entriesContainer');
         const count = container.querySelectorAll('.entry-card').length + 1;
         
@@ -402,47 +409,62 @@ html_content = """<!DOCTYPE html>
                 <button type="button" class="btn-delete-entry" onclick="removeEntry(this)">✕ Baustelle löschen</button>
             </div>
             <label>Baustelle (Suchfeld)</label>
-            <input type="text" name="baustelle[]" list="baustellen-liste" placeholder="Baustelle tippen..." onchange="handleBaustelleChange(this)" required>
+            <input type="text" name="baustelle[]" list="baustellen-liste" value="${data ? data.baustelle || '' : ''}" placeholder="Baustelle tippen..." onchange="handleBaustelleChange(this)" required>
             <label>KTR (Kostenstelle)</label>
-            <input type="text" name="ktr[]" placeholder="z. B. 51489" onchange="handleKTRChange(this)" required>
+            <input type="text" name="ktr[]" value="${data ? data.ktr || '' : ''}" placeholder="z. B. 51489" onchange="handleKTRChange(this)" required>
             
             <div class="time-block">
                 <div class="time-title">Zeitfenster 1</div>
                 <div class="row">
-                    <div><label>Von</label><input type="time" name="von1[]" onchange="calculateHours()" required></div>
-                    <div><label>Bis</label><input type="time" name="bis1[]" onchange="calculateHours()" required></div>
+                    <div><label>Von</label><input type="time" name="von1[]" value="${data ? data.von1 || '' : ''}" onchange="calculateHours()" required></div>
+                    <div><label>Bis</label><input type="time" name="bis1[]" value="${data ? data.bis1 || '' : ''}" onchange="calculateHours()" required></div>
                 </div>
             </div>
             <div class="time-block">
                 <div class="time-title">Zeitfenster 2 (optional)</div>
                 <div class="row">
-                    <div><label>Von</label><input type="time" name="von2[]" onchange="calculateHours()"></div>
-                    <div><label>Bis</label><input type="time" name="bis2[]" onchange="calculateHours()"></div>
+                    <div><label>Von</label><input type="time" name="von2[]" value="${data ? data.von2 || '' : ''}" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="bis2[]" value="${data ? data.bis2 || '' : ''}" onchange="calculateHours()"></div>
                 </div>
             </div>
             <div class="time-block">
                 <div class="time-title">Zeitfenster 3 (optional)</div>
                 <div class="row">
-                    <div><label>Von</label><input type="time" name="von3[]" onchange="calculateHours()"></div>
-                    <div><label>Bis</label><input type="time" name="bis3[]" onchange="calculateHours()"></div>
+                    <div><label>Von</label><input type="time" name="von3[]" value="${data ? data.von3 || '' : ''}" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="bis3[]" value="${data ? data.bis3 || '' : ''}" onchange="calculateHours()"></div>
                 </div>
             </div>
             <div class="subtotal-box">Stunden dieser Einsatz: <span class="site-hours">00:00</span> Std</div>
             <div class="row">
                 <div>
                     <label>Reisezeit (RZ)</label>
-                    <select name="reisezeit[]"><option value="0">Keine</option><option value="0.5">Halbe (0.5)</option><option value="1.0">Ganze (1.0)</option></select>
+                    <select name="reisezeit[]">
+                        <option value="0" ${data && data.reisezeit === '0' ? 'selected' : ''}>Keine</option>
+                        <option value="0.5" ${data && data.reisezeit === '0.5' ? 'selected' : ''}>Halbe (0.5)</option>
+                        <option value="1.0" ${data && data.reisezeit === '1.0' ? 'selected' : ''}>Ganze (1.0)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Reisezeit Fahrer</label>
+                    <select name="rz_fahrer[]">
+                        <option value="Nein" ${data && data.rz_fahrer === 'Nein' ? 'selected' : ''}>Nein</option>
+                        <option value="Ja" ${data && data.rz_fahrer === 'Ja' ? 'selected' : ''}>Ja</option>
+                    </select>
                 </div>
                 <div>
                     <label>Mittagszulage</label>
-                    <select name="me[]"><option value="Nein">Nein</option><option value="Ja">Ja</option></select>
+                    <select name="me[]">
+                        <option value="Nein" ${data && data.mittagszulage === 'Nein' ? 'selected' : ''}>Nein</option>
+                        <option value="Ja" ${data && data.mittagszulage === 'Ja' ? 'selected' : ''}>Ja</option>
+                    </select>
                 </div>
             </div>
             <label>Begründung / Spezielles</label>
-            <input type="text" name="begruendung[]" placeholder="Optional">
+            <input type="text" name="begruendung[]" value="${data ? data.begruendung || '' : ''}" placeholder="Optional">
         `;
         container.appendChild(newEntry);
         updateEntryNumbers();
+        calculateHours();
     }
 
     function removeEntry(button) {
@@ -509,13 +531,8 @@ html_content = """<!DOCTYPE html>
         return dateString;
     }
 
-    function saveCurrentDay(showAlert = true) {
+    function getFormDataObject() {
         const datum = document.getElementById('datumInput').value;
-        if (!datum) {
-            if (showAlert) alert('Bitte ein Datum wählen!');
-            return false;
-        }
-
         const workerInputs = document.querySelectorAll('input[name="arbeiter[]"]');
         const workers = Array.from(workerInputs).map(i => i.value).filter(v => v !== '');
 
@@ -540,32 +557,75 @@ html_content = """<!DOCTYPE html>
                 von3: card.querySelector('input[name="von3[]"]').value,
                 bis3: card.querySelector('input[name="bis3[]"]').value,
                 reisezeit: card.querySelector('select[name="reisezeit[]"]').value,
+                rz_fahrer: card.querySelector('select[name="rz_fahrer[]"]').value,
                 mittagszulage: card.querySelector('select[name="me[]"]').value,
                 begruendung: card.querySelector('input[name="begruendung[]"]').value,
                 stundenText: card.querySelector('.site-hours').textContent
             });
         });
 
-        const dayRecord = {
+        return {
             datum: datum,
             arbeiter: workers,
             einsaetze: einsaetze,
             tagestotalMinutes: calculateHours()
         };
+    }
+
+    function saveDraftDay() {
+        const data = getFormDataObject();
+        localStorage.setItem('stundenkarte_draft_day', JSON.stringify(data));
+        alert('Eingaben im Formular zwischengespeichert!');
+    }
+
+    function loadDraftDay() {
+        const draft = localStorage.getItem('stundenkarte_draft_day');
+        if (!draft) return;
+        const data = JSON.parse(draft);
+
+        if (data.datum) document.getElementById('datumInput').value = data.datum;
+
+        if (data.arbeiter && data.arbeiter.length > 0) {
+            const container = document.getElementById('workerContainer');
+            container.innerHTML = '';
+            data.arbeiter.forEach((w, idx) => {
+                if (idx === 0) {
+                    container.innerHTML = `<div class="worker-row"><input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="${w}" onchange="handleNewWorker(this)" required></div>`;
+                } else {
+                    addWorkerField(w);
+                }
+            });
+        }
+
+        if (data.einsaetze && data.einsaetze.length > 0) {
+            const container = document.getElementById('entriesContainer');
+            container.innerHTML = '';
+            data.einsaetze.forEach(e => {
+                addEntry(e);
+            });
+        }
+    }
+
+    function commitDayToWeek() {
+        const dayRecord = getFormDataObject();
+        if (!dayRecord.datum) {
+            alert('Bitte ein Datum wählen!');
+            return false;
+        }
 
         let weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
-        weekData = weekData.filter(item => item.datum !== datum);
+        weekData = weekData.filter(item => item.datum !== dayRecord.datum);
         weekData.push(dayRecord);
         weekData.sort((a,b) => new Date(a.datum) - new Date(b.datum));
 
         localStorage.setItem('stundenkarte_woche', JSON.stringify(weekData));
-        if (showAlert) alert('Tag (' + formatDateToDMY(datum) + ') wurde erfolgreich zwischengespeichert!');
+        localStorage.removeItem('stundenkarte_draft_day');
         renderSavedDays();
         return true;
     }
 
     function handleNextDay() {
-        const success = saveCurrentDay(false);
+        const success = commitDayToWeek();
         if (!success) return;
 
         const copyChecked = document.getElementById('copyDetailsCheck').checked;
@@ -593,7 +653,7 @@ html_content = """<!DOCTYPE html>
         }
 
         calculateHours();
-        alert('Tag gespeichert! Neues Datum: ' + formatDateToDMY(datumInput.value));
+        alert('Tag in Wochenspeicher übernommen! Neues Datum: ' + formatDateToDMY(datumInput.value));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -631,11 +691,13 @@ html_content = """<!DOCTYPE html>
         const currentDatum = document.getElementById('datumInput').value;
         
         if (currentHours > 0 && currentDatum) {
-            saveCurrentDay(false);
+            if (confirm("Möchten Sie den aktuell eingegebenen Tag noch in den Wochenspeicher übernehmen?")) {
+                commitDayToWeek();
+            }
         }
 
         const weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
-        if (weekData.length === 0) return alert('Es wurden noch keine Tage zwischengespeichert!');
+        if (weekData.length === 0) return alert('Es wurden noch keine Tage im Wochenspeicher abgelegt!');
 
         let allWorkersSet = new Set();
         weekData.forEach(day => {
@@ -687,6 +749,7 @@ html_content = """<!DOCTYPE html>
                         }
 
                         row.push(e.reisezeit);
+                        row.push(e.rz_fahrer || 'Nein');
                         row.push(e.mittagszulage);
                         row.push(e.begruendung || '');
 
@@ -698,7 +761,7 @@ html_content = """<!DOCTYPE html>
 
             doc.autoTable({
                 startY: 34,
-                head: [['Datum', 'Baustelle', 'KTR', 'Zeiten', 'Std', 'Tagestotal', 'RZ', 'ME', 'Begründung']],
+                head: [['Datum', 'Baustelle', 'KTR', 'Zeiten', 'Std', 'Tagestotal', 'RZ', 'Fahrer', 'ME', 'Begründung']],
                 body: tableRows,
                 theme: 'grid',
                 headStyles: { fillColor: [0, 86, 179] },
@@ -724,14 +787,9 @@ html_content = """<!DOCTYPE html>
     }
 
     loadSavedLists();
+    loadDraftDay();
     renderSavedDays();
 </script>
 
 </body>
 </html>
-"""
-
-with open("stundenkarte.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-print("HTML File successfully created: stundenkarte.html")

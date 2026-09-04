@@ -18,3 +18,5 @@ Frontend: Die Anwendung besteht aus HTML, CSS und JavaScript und läuft ohne eig
 Lokaler Speicher (localStorage): Speichert automatisch Stammdaten (Mitarbeiterliste, Baustellen-KTR-Zuordnungen), Entwürfe, die aktuelle Woche sowie das Archiv auf dem Gerät des Nutzers.
 
 PDF-Bibliothek: Verwendet jsPDF und jspdf-autotable, um aus den erfassten Daten direkt im Browser druckfähige PDF-Dateien im Layout der Firma Ghelma AG Spezialtiefbau zu generieren.
+
+Tag kann erst abgelegt werden, wenn mindestens eine Baustelle erfasst ist und ein Zeitfenster.

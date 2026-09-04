@@ -148,6 +148,7 @@
         .day-list-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             background: white;
             padding: 8px 12px;
             border-radius: 6px;
@@ -175,6 +176,19 @@
         button.send-hr { background: #fd7e14; margin-top: 10px; font-size: 17px; }
         button.archive-btn { background: #343a40; margin-top: 10px; }
         
+        .btn-edit-day {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+            width: auto;
+        }
+
         .archive-box {
             background: #fff;
             border: 1px solid #ccc;
@@ -183,12 +197,28 @@
             margin-top: 15px;
             display: none;
         }
+
+        .edit-banner {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 14px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
 <datalist id="mitarbeiter-liste"></datalist>
 <datalist id="baustellen-liste"></datalist>
+
+<div id="editingBanner" class="edit-banner">
+    ⚠️ Du bearbeitest aktuell eine archivierte Woche. Nach dem Anpassen unten auf "Woche abschließen & PDFs erstellen" klicken, um die Änderungen im Archiv zu überschreiben.
+</div>
 
 <form id="timeForm">
     <div class="card">
@@ -314,6 +344,8 @@
 </div>
 
 <script>
+    let currentEditingArchiveId = null;
+
     document.getElementById('datumInput').valueAsDate = new Date();
 
     const defaultKTRMapping = { 
@@ -625,17 +657,7 @@
         };
     }
 
-    function saveDraftDay() {
-        const data = getFormDataObject();
-        localStorage.setItem('stundenkarte_draft_day', JSON.stringify(data));
-        alert('Eingaben im Formular zwischengespeichert!');
-    }
-
-    function loadDraftDay() {
-        const draft = localStorage.getItem('stundenkarte_draft_day');
-        if (!draft) return;
-        const data = JSON.parse(draft);
-
+    function fillFormWithDayData(data) {
         if (data.datum) document.getElementById('datumInput').value = data.datum;
 
         if (data.arbeiter && data.arbeiter.length > 0) {
@@ -658,6 +680,28 @@
             });
         }
         updateDriverSelects();
+        calculateHours();
+    }
+
+    function editDay(index) {
+        let weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
+        if (weekData[index]) {
+            fillFormWithDayData(weekData[index]);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function saveDraftDay() {
+        const data = getFormDataObject();
+        localStorage.setItem('stundenkarte_draft_day', JSON.stringify(data));
+        alert('Eingaben im Formular zwischengespeichert!');
+    }
+
+    function loadDraftDay() {
+        const draft = localStorage.getItem('stundenkarte_draft_day');
+        if (!draft) return;
+        const data = JSON.parse(draft);
+        fillFormWithDayData(data);
     }
 
     function commitDayToWeek() {
@@ -724,9 +768,14 @@
         weekData.forEach((day, index) => {
             html += `
                 <div class="day-list-item">
-                    <span><strong>${formatDateToDMY(day.datum)}</strong> (${day.einsaetze.length} Einsatz/Einsätze)</span>
-                    <span><strong>${formatMinutesToDecimal(day.tagestotalMinutes)} Std (${formatMinutesToHHMM(day.tagestotalMinutes)})</strong> 
-                    <a href="#" onclick="removeDay(${index})" style="color:red; margin-left:10px; text-decoration:none;">✕</a></span>
+                    <div>
+                        <strong>${formatDateToDMY(day.datum)}</strong> (${day.einsaetze.length} Einsatz/Einsätze)
+                    </div>
+                    <div>
+                        <strong>${formatMinutesToDecimal(day.tagestotalMinutes)} Std</strong> 
+                        <button type="button" class="btn-edit-day" onclick="editDay(${index})">Bearbeiten</button>
+                        <a href="#" onclick="removeDay(${index})" style="color:red; margin-left:8px; text-decoration:none; font-weight:bold;">✕</a>
+                    </div>
                 </div>
             `;
         });
@@ -734,30 +783,66 @@
     }
 
     function removeDay(index) {
+        if (!confirm("Möchten Sie diesen Tag wirklich löschen?")) return;
         let weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
         weekData.splice(index, 1);
         localStorage.setItem('stundenkarte_woche', JSON.stringify(weekData));
         renderSavedDays();
     }
 
-    /* DIGITALES ARCHIV SPEICHERN & LADEN */
-    function archiveCurrentWeek(weekData) {
+    /* DIGITALES ARCHIV SPEICHERN, LADEN & BEARBEITEN */
+    function archiveCurrentWeek(weekData, overwriteId = null) {
         if (!weekData || weekData.length === 0) return;
         let archive = JSON.parse(localStorage.getItem('stundenkarte_archiv') || '[]');
         
         const firstDate = formatDateToDMY(weekData[0].datum);
         const lastDate = formatDateToDMY(weekData[weekData.length - 1].datum);
         const archiveTitle = `Woche vom ${firstDate} bis ${lastDate}`;
-        
-        archive.unshift({
-            id: Date.now(),
-            title: archiveTitle,
-            created: new Date().toLocaleString('de-CH'),
-            data: weekData
-        });
+
+        if (overwriteId) {
+            const index = archive.findIndex(item => item.id === overwriteId);
+            if (index !== -1) {
+                archive[index].title = archiveTitle;
+                archive[index].updated = new Date().toLocaleString('de-CH');
+                archive[index].data = weekData;
+            }
+        } else {
+            archive.unshift({
+                id: Date.now(),
+                title: archiveTitle,
+                created: new Date().toLocaleString('de-CH'),
+                data: weekData
+            });
+        }
 
         localStorage.setItem('stundenkarte_archiv', JSON.stringify(archive));
         renderArchive();
+    }
+
+    function editArchivedWeek(index) {
+        const weekDataInStorage = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
+        if (weekDataInStorage.length > 0) {
+            if (!confirm("Achtung: Du hast bereits ungespeicherte Tage in deiner aktuellen Erfassung. Wenn du die archivierte Woche lädst, werden die ungespeicherten Daten im Hauptfenster überschrieben. Fortfahren?")) {
+                return;
+            }
+        }
+
+        let archive = JSON.parse(localStorage.getItem('stundenkarte_archiv') || '[]');
+        const target = archive[index];
+        if (!target) return;
+
+        currentEditingArchiveId = target.id;
+        document.getElementById('editingBanner').style.display = 'block';
+
+        localStorage.setItem('stundenkarte_woche', JSON.stringify(target.data));
+        renderSavedDays();
+
+        if (target.data.length > 0) {
+            fillFormWithDayData(target.data[0]);
+        }
+
+        toggleArchive();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderArchive() {
@@ -775,9 +860,10 @@
                 <div class="day-list-item" style="flex-direction:column; gap:5px; align-items:flex-start;">
                     <div style="display:flex; justify-content:space-between; width:100%;">
                         <strong>${item.title}</strong>
-                        <span style="font-size:11px; color:#666;">${item.created}</span>
+                        <span style="font-size:11px; color:#666;">${item.updated ? 'Bearbeitet: ' + item.updated : item.created}</span>
                     </div>
                     <div style="display:flex; gap:10px; width:100%; margin-top:5px;">
+                        <button type="button" style="padding:4px 8px; font-size:12px; margin:0; background:#ffc107; color:#212529;" onclick="editArchivedWeek(${index})">Woche bearbeiten</button>
                         <button type="button" style="padding:4px 8px; font-size:12px; margin:0; background:#17a2b8;" onclick="downloadArchivedPDF(${index})">PDF herunterladen</button>
                         <button type="button" style="padding:4px 8px; font-size:12px; margin:0; background:#dc3545;" onclick="deleteArchivedWeek(${index})">Löschen</button>
                     </div>
@@ -812,19 +898,24 @@
         }
     }
 
+    function timeToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
+
     function categorizeTimeWindow(von, bis) {
         if (!von || !bis) return null;
-        const [h, m] = von.split(':').map(Number);
-        const minutes = h * 60 + m;
+        const minutes = timeToMinutes(von);
 
         let type = 'morgen';
-        if (minutes > 540 && minutes <= 720) { 
+        if (minutes >= 540 && minutes <= 720) { 
             type = 'vormittag';
         } else if (minutes > 720) { 
             type = 'nachmittag';
         }
 
-        return { von, bis, type };
+        return { von, bis, minutes, type };
     }
 
     /* PDF GENERIERUNG IM QUERFORMAT UND GHELMA LAYOUT */
@@ -842,7 +933,6 @@
         allWorkersArray.forEach(workerName => {
             const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-            // Firmenheader GHELMA
             doc.setFont("Helvetica", "bold");
             doc.setFontSize(16);
             doc.text("GHELMA", 14, 12);
@@ -884,9 +974,22 @@
                             categorizeTimeWindow(e.von3, e.bis3)
                         ].filter(t => t !== null);
 
-                        let mo1 = times.find(t => t.type === 'morgen');
-                        let vm1 = times.find(t => t.type === 'vormittag');
-                        let nm1 = times.find(t => t.type === 'nachmittag');
+                        times.sort((a, b) => a.minutes - b.minutes);
+
+                        let mo1 = null;
+                        let vm1 = null;
+                        let nm1 = null;
+
+                        let nachmittagTimes = times.filter(t => t.type === 'nachmittag');
+                        if (nachmittagTimes.length >= 2 && !times.some(t => t.type === 'vormittag')) {
+                            nachmittagTimes[0].type = 'vormittag';
+                        }
+
+                        times.forEach(t => {
+                            if (t.type === 'morgen' && !mo1) mo1 = t;
+                            else if (t.type === 'vormittag' && !vm1) vm1 = t;
+                            else if (t.type === 'nachmittag' && !nm1) nm1 = t;
+                        });
 
                         row.push(mo1 ? mo1.von : ''); 
                         row.push(mo1 ? mo1.bis : '');
@@ -962,16 +1065,15 @@
                 styles: { fontSize: 8, cellPadding: 1, lineColor: [180, 180, 180], lineWidth: 0.1 },
                 headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8, alignment: 'center' },
                 columnStyles: {
-                    10: { cellWidth: 'auto' }, // ME (nur so breit wie nötig)
-                    11: { cellWidth: 'auto' }, // RZ (nur so breit wie nötig)
-                    12: { cellWidth: 'auto' }, // RZ F (nur so breit wie nötig)
-                    13: { cellWidth: 'auto' }  // Soll Stunden (nur so breit wie nötig)
+                    10: { cellWidth: 'auto' }, 
+                    11: { cellWidth: 'auto' }, 
+                    12: { cellWidth: 'auto' }, 
+                    13: { cellWidth: 'auto' }  
                 }
             });
 
             let currentY = doc.lastAutoTable.finalY + 4;
 
-            // Legende unten
             doc.setFontSize(6.5);
             doc.setFont("Helvetica", "normal");
             const legendData = [
@@ -993,7 +1095,6 @@
                 }
             });
 
-            // Fusszeile als Block unten rechts (Schriftgröße 12 & fett, Ausrichtung am Doppelpunkt)
             let pNr = workerName.split(' - ')[0] || '';
             let fullName = workerName.split(' - ')[1] || workerName;
             let parts = fullName.split(' ');
@@ -1003,21 +1104,17 @@
             doc.setFontSize(12);
             doc.setFont("Helvetica", "bold");
             
-            // Exakte Positionierung: Links-Spalte (Labels) rechtsbündig zur Doppelpunkt-X-Achse, Werte linksbündig
             const xLabelRight = 248; 
             const xValueLeft = 251;
 
-            // Zeile 1: Personalnummer
             doc.text("Personalnummer", xLabelRight, 185, { align: 'right' });
             doc.text(":", xLabelRight, 185);
             doc.text(pNr, xValueLeft, 185);
 
-            // Zeile 2: Vorname
             doc.text("Vorname", xLabelRight, 191, { align: 'right' });
             doc.text(":", xLabelRight, 191);
             doc.text(vorname, xValueLeft, 191);
 
-            // Zeile 3: Nachname
             doc.text("Nachname", xLabelRight, 197, { align: 'right' });
             doc.text(":", xLabelRight, 197);
             doc.text(nachname, xValueLeft, 197);
@@ -1042,11 +1139,11 @@
         const weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
         if (weekData.length === 0) return alert('Es wurden noch keine Tage im Wochenspeicher abgelegt!');
 
-        // PDF generieren
         generatePDFsFromData(weekData);
+        archiveCurrentWeek(weekData, currentEditingArchiveId);
 
-        // In Digitales Archiv übertragen
-        archiveCurrentWeek(weekData);
+        currentEditingArchiveId = null;
+        document.getElementById('editingBanner').style.display = 'none';
 
         if (confirm("Die Woche wurde im digitalen Archiv gespeichert. Möchten Sie den aktiven Erfassungsbereich für die neue Woche leeren?")) {
             localStorage.removeItem('stundenkarte_woche');

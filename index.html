@@ -706,9 +706,35 @@
 
     function commitDayToWeek() {
         const dayRecord = getFormDataObject();
+
         if (!dayRecord.datum) {
             alert('Bitte ein Datum wählen!');
             return false;
+        }
+
+        // 1. Prüfen, ob mindestens eine Baustelle eingegeben wurde
+        if (!dayRecord.einsaetze || dayRecord.einsaetze.length === 0) {
+            alert('Fehler: Es muss mindestens eine Baustelle erfasst sein!');
+            return false;
+        }
+
+        // 2. Validierung: Jede Baustelle muss einen Namen und mind. ein vollständiges Zeitfenster haben
+        for (let i = 0; i < dayRecord.einsaetze.length; i++) {
+            const einsatz = dayRecord.einsaetze[i];
+            
+            if (!einsatz.baustelle || einsatz.baustelle.trim() === '') {
+                alert(`Fehler bei Einsatz ${i + 1}: Bitte einen Baustellen-Namen eingeben!`);
+                return false;
+            }
+
+            const hasTimeWindow1 = einsatz.von1 && einsatz.bis1;
+            const hasTimeWindow2 = einsatz.von2 && einsatz.bis2;
+            const hasTimeWindow3 = einsatz.von3 && einsatz.bis3;
+
+            if (!hasTimeWindow1 && !hasTimeWindow2 && !hasTimeWindow3) {
+                alert(`Fehler bei Einsatz ${i + 1} (${einsatz.baustelle}): Bitte mindestens ein vollständiges Zeitfenster (Von und Bis) ausfüllen!`);
+                return false;
+            }
         }
 
         let weekData = JSON.parse(localStorage.getItem('stundenkarte_woche') || '[]');
@@ -1132,7 +1158,8 @@
         
         if (currentHours > 0 && currentDatum) {
             if (confirm("Möchten Sie den aktuell eingegebenen Tag noch in den Wochenspeicher übernehmen?")) {
-                commitDayToWeek();
+                const committed = commitDayToWeek();
+                if (!committed) return; // Abbrechen, falls Validierung fehlschlägt
             }
         }
 

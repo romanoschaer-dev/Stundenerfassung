@@ -222,7 +222,7 @@
 
 <form id="timeForm">
     <div class="card">
-        <h3>Arbeiter auswählen</h3>
+        <h3>Arbeiter & Arbeitszeit</h3>
         <label>Beteiligte Mitarbeiter:</label>
         <div id="workerContainer">
             <div class="worker-row">
@@ -231,8 +231,20 @@
         </div>
         <button type="button" class="secondary" onclick="addWorkerField()">+ Name hinzufügen</button>
         
-        <label style="margin-top: 15px;">Datum</label>
-        <input type="date" name="datum" id="datumInput" required>
+        <div class="row" style="margin-top: 12px;">
+            <div>
+                <label>Datum</label>
+                <input type="date" name="datum" id="datumInput" onchange="handleDateChange()" required>
+            </div>
+            <div>
+                <label>Soll-Arbeitszeit</label>
+                <select name="soll_zeit" id="sollZeitInput">
+                    <option value="8.00">8.00h (Winterzeit)</option>
+                    <option value="8.50">8.50h (Übergangszeit)</option>
+                    <option value="8.75">8.75h (Sommerzeit)</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <div id="entriesContainer">
@@ -360,6 +372,31 @@
     function getKTRMapping() {
         const stored = localStorage.getItem('stundenkarte_ktr_mapping');
         return stored ? JSON.parse(stored) : defaultKTRMapping;
+    }
+
+    /* Automatische Bestimmung der Soll-Arbeitszeit gemäss Arbeitszeitkalender 2026 */
+    function determineSollZeit(dateString) {
+        if (!dateString) return "8.75";
+        const date = new Date(dateString);
+        const month = date.getMonth() + 1; // 1 = Januar, 12 = Dezember
+        
+        // Gemäss PDF-Kalender:
+        // Dezember / Januar / Februar -> typischerweise Winterzeit (8.00h) bzw. Feiertage/Betriebsferien
+        // März, November -> Übergangszeiten (8.50h)
+        // April bis Oktober -> Sommerzeit (8.75h)
+        if (month === 12 || month === 1 || month === 2) {
+            return "8.00";
+        } else if (month === 3 || month === 11) {
+            return "8.50";
+        } else {
+            return "8.75";
+        }
+    }
+
+    function handleDateChange() {
+        const datumVal = document.getElementById('datumInput').value;
+        const suggestedSoll = determineSollZeit(datumVal);
+        document.getElementById('sollZeitInput').value = suggestedSoll;
     }
 
     function loadSavedLists() {
@@ -617,6 +654,7 @@
 
     function getFormDataObject() {
         const datum = document.getElementById('datumInput').value;
+        const sollZeit = document.getElementById('sollZeitInput').value;
         const workerInputs = document.querySelectorAll('input[name="arbeiter[]"]');
         const workers = Array.from(workerInputs).map(i => i.value).filter(v => v !== '');
 
@@ -651,6 +689,7 @@
 
         return {
             datum: datum,
+            sollZeit: sollZeit,
             arbeiter: workers,
             einsaetze: einsaetze,
             tagestotalMinutes: calculateHours()
@@ -659,6 +698,11 @@
 
     function fillFormWithDayData(data) {
         if (data.datum) document.getElementById('datumInput').value = data.datum;
+        if (data.sollZeit) {
+            document.getElementById('sollZeitInput').value = data.sollZeit;
+        } else {
+            handleDateChange();
+        }
 
         if (data.arbeiter && data.arbeiter.length > 0) {
             const container = document.getElementById('workerContainer');
@@ -699,7 +743,10 @@
 
     function loadDraftDay() {
         const draft = localStorage.getItem('stundenkarte_draft_day');
-        if (!draft) return;
+        if (!draft) {
+            handleDateChange();
+            return;
+        }
         const data = JSON.parse(draft);
         fillFormWithDayData(data);
     }
@@ -732,6 +779,7 @@
         const currentDate = new Date(datumInput.value);
         currentDate.setDate(currentDate.getDate() + 1);
         datumInput.valueAsDate = currentDate;
+        handleDateChange();
 
         const timeInputs = document.querySelectorAll('input[type="time"]');
         timeInputs.forEach(input => input.value = '');
@@ -769,7 +817,7 @@
             html += `
                 <div class="day-list-item">
                     <div>
-                        <strong>${formatDateToDMY(day.datum)}</strong> (${day.einsaetze.length} Einsatz/Einsätze)
+                        <strong>${formatDateToDMY(day.datum)}</strong> (Soll: ${day.sollZeit || '8.75'}h, ${day.einsaetze.length} Einsatz/Einsätze)
                     </div>
                     <div>
                         <strong>${formatMinutesToDecimal(day.tagestotalMinutes)} Std</strong> 
@@ -953,6 +1001,7 @@
                 if (day.arbeiter && day.arbeiter.includes(workerName)) {
                     const tagNumber = day.datum.split('-')[2];
                     const rowCount = day.einsaetze.length;
+                    const daySoll = day.sollZeit || '8.75';
 
                     day.einsaetze.forEach((e, index) => {
                         let row = [];
@@ -1017,7 +1066,7 @@
 
                         if (index === 0) {
                             row.push({
-                                content: '8.75',
+                                content: daySoll,
                                 rowSpan: rowCount,
                                 styles: { valign: 'middle', halign: 'center' }
                             });

@@ -377,7 +377,7 @@
 
 <form id="timeForm">
     <div class="card">
-        <h3>Arbeiter & Arbeitszeit</h3>
+        <h3>Arbeiter & Arbeitszeit (2026 / 2027)</h3>
         <label>Beteiligte Mitarbeiter:</label>
         <div id="workerContainer">
             <div class="worker-row">
@@ -399,7 +399,7 @@
                 <label>Soll-Arbeitszeit</label>
                 <select name="soll_zeit" id="sollZeitInput">
                     <option value="8.00">8.00h</option>
-                    <option value="8.50">8.50h</option>
+                    <option value="8.50">8.50h </option>
                     <option value="8.75">8.75h</option>
                 </select>
             </div>
@@ -545,16 +545,21 @@
         return stored ? JSON.parse(stored) : defaultKTRMapping;
     }
 
+    // Angepasst an Arbeitszeitkalender 2026 / 2027 Regeln:
+    // Winterzeit (Dez, Jan, Feb): 8.00h
+    // Übergangszeit (März, November): 8.50h
+    // Sommerzeit (April bis Oktober): 8.75h
     function determineSollZeit(dateString) {
         if (!dateString) return "8.75";
         const date = new Date(dateString);
-        const month = date.getMonth() + 1;
+        const month = date.getMonth() + 1; // 1 = Januar, 12 = Dezember
+        
         if (month === 12 || month === 1 || month === 2) {
-            return "8.00";
+            return "8.00"; // Winterzeit
         } else if (month === 3 || month === 11) {
-            return "8.50";
+            return "8.50"; // Übergangszeit (März / November)
         } else {
-            return "8.75";
+            return "8.75"; // Sommerzeit (April - Oktober)
         }
     }
 
@@ -1569,7 +1574,7 @@
                 }
             });
 
-            let pNr = workerName.path ? '' : (workerName.split(' - ')[0] || '');
+            let pNr = workerName.split(' - ')[0] || '';
             let fullName = workerName.split(' - ')[1] || workerName;
             let parts = fullName.split(' ');
             let nachname = parts[0] || '';

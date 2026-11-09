@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stundenkarte Erfassung</title>
+    
+    <!-- App-Icons für Startbildschirm (iPhone, iPad & Android) -->
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90byBJQyBwcm9maWxlAABHicfZLNSsNQEMUn6f01lgr1UIpL2a9iFwtFESsIBW0VpLRfShOm6WdIK5NMcilUfAlvXkRwoQuu/wYvXgSkC/OahxnyBwa+wAkXF5r2jPNwdT0B0f22Vp0gHq7q2Yn5D3v/sM/r1vUaV/wD6F7W7fSFUj4X+V7u+hX1+u61Y3rV4D6EodrV4D2s11s1s23i98lqZ538aQcT1o3rY3T54nF6/L44h5aJvF5rVq8hU5122v0XquY3+71CmvC7G/s5s1b+m2F2q9v/sA75x1h9cT2vWvvYx4A0Z1r84b0vQO0vX/mY8YlM9v6Q2Y/5x6a9fO2lXJ/vT3p+562i43e03Qd1vXvdN07eU3b1z9GTPf/XNlX7r8A4A9H6pL4sQvXAAAAAElFTkSuQmCC">
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90byBJQyBwcm9maWxlAABHicfZLNSsNQEMUn6f01lgr1UIpL2a9iFwtFESsIBW0VpLRfShOm6WdIK5NMcilUfAlvXkRwoQuu/wYvXgSkC/OahxnyBwa+wAkXF5r2jPNwdT0B0f22Vp0gHq7q2Yn5D3v/sM/r1vUaV/wD6F7W7fSFUj4X+V7u+hX1+u61Y3rV4D6EodrV4D2s11s1s23i98lqZ538aQcT1o3rY3T54nF6/L44h5aJvF5rVq8hU5122v0XquY3+71CmvC7G/s5s1b+m2F2q9v/sA75x1h9cT2vWvvYx4A0Z1r84b0vQO0vX/mY8YlM9v6Q2Y/5x6a9fO2lXJ/vT3p+562i43e03Qd1vXvdN07eU3b1z9GTPf/XNlX7r8A4A9H6pL4sQvXAAAAAElFTkSuQmCC">
+
     <!-- Lokale Bibliotheken für PDF-Erstellung -->
     <script src="jspdf.umd.min_2.js"></script>
     <script src="jspdf.plugin.autotable.min_2.js"></script>
@@ -22,13 +27,18 @@
             margin-bottom: 15px; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
         }
+        .custom-card {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+        }
         .entry-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            gap: 10px;
         }
-        .entry-header h3 { margin: 0; }
+        .entry-header h3 { margin: 0; white-space: nowrap; }
         h3 { margin-top: 0; color: #111; }
         label { 
             font-size: 12px; 
@@ -45,7 +55,14 @@
             border-radius: 6px; 
             box-sizing: border-box; 
             font-size: 14px; 
+            background-color: #fff;
+            color: #333;
         }
+        select option {
+            background-color: #ffffff !important;
+            color: #333333 !important;
+        }
+
         .row { display: flex; gap: 10px; }
         .row > div { flex: 1; }
         
@@ -76,13 +93,14 @@
             background: #dc3545;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-size: 11px;
             font-weight: bold;
             cursor: pointer;
             width: auto;
-            margin: 0;
+            flex: 1;
+            white-space: nowrap;
         }
 
         .time-block {
@@ -169,10 +187,44 @@
             cursor: pointer; 
             margin-top: 10px; 
         }
-        button.add { background: #28a745; margin-bottom: 15px; }
+        button.add { background: #28a745; margin-bottom: 10px; }
+        button.add-custom { background: #ff9800; margin-bottom: 15px; color: #fff; }
         button.save-day { background: #17a2b8; margin-top: 10px; }
         button.next-day { background: #6f42c1; margin-top: 10px; }
         button.secondary { background: #6c757d; margin-top: 10px; margin-bottom: 0; }
+        
+        .worker-btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .worker-btn-row button {
+            margin-top: 0;
+        }
+        button.btn-add-worker {
+            background: #6c757d;
+            flex: 1;
+            font-size: 16px;
+            padding: 12px;
+        }
+        button.manage-btn-worker {
+            background: #17a2b8;
+            flex: 1;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        button.manage-btn-site {
+            background: #17a2b8;
+            flex: 1;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            width: auto;
+            white-space: nowrap;
+        }
+
         button.send-hr { background: #fd7e14; margin-top: 10px; font-size: 17px; }
         button.archive-btn { background: #343a40; margin-top: 10px; }
         
@@ -209,12 +261,115 @@
             font-size: 14px;
             font-weight: bold;
         }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-content h3 { margin-top: 0; }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .modal-buttons button {
+            margin-top: 0;
+        }
+        .btn-cancel { background: #6c757d; }
+        
+        .manage-list {
+            margin-top: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 5px;
+        }
+        .manage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        .manage-item:last-child {
+            border-bottom: none;
+        }
+        .btn-delete-item {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
 
 <datalist id="mitarbeiter-liste"></datalist>
 <datalist id="baustellen-liste"></datalist>
+
+<!-- Pop-up für neuen Mitarbeiter -->
+<div id="workerModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Neuen Mitarbeiter erfassen</h3>
+        <label>Personalnummer (zwingend):</label>
+        <input type="text" id="modalPersonalNr" placeholder="z. B. 13291" required>
+        
+        <label>Vor- und Nachname (zwingend):</label>
+        <input type="text" id="modalWorkerName" placeholder="z. B. Max Mustermann" required>
+        
+        <div class="modal-buttons">
+            <button type="button" class="btn-cancel" onclick="closeWorkerModal()">Abbrechen</button>
+            <button type="button" onclick="saveNewWorkerFromModal()">Hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pop-up für Mitarbeiter verwalten -->
+<div id="manageWorkersModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Mitarbeiter verwalten</h3>
+        <p style="font-size: 12px; color: #666; margin-top: -5px;">Nicht mehr benötigte Mitarbeiter löschen:</p>
+        <div id="manageWorkersList" class="manage-list"></div>
+        <div class="modal-buttons" style="margin-top: 15px;">
+            <button type="button" class="btn-cancel" onclick="closeManageWorkersModal()">Schließen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pop-up für Baustellen & KTR verwalten -->
+<div id="manageSitesModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Baustellen & KTR verwalten</h3>
+        <p style="font-size: 12px; color: #666; margin-top: -5px;">Falsch eingegebene Baustellen oder KTRs löschen:</p>
+        <div id="manageSitesList" class="manage-list"></div>
+        <div class="modal-buttons" style="margin-top: 15px;">
+            <button type="button" class="btn-cancel" onclick="closeManageSitesModal()">Schließen</button>
+        </div>
+    </div>
+</div>
 
 <div id="editingBanner" class="edit-banner">
     ⚠️ Du bearbeitest aktuell eine archivierte Woche. Nach dem Anpassen unten auf "Woche abschließen & PDFs erstellen" klicken, um die Änderungen im Archiv zu überschreiben.
@@ -226,10 +381,14 @@
         <label>Beteiligte Mitarbeiter:</label>
         <div id="workerContainer">
             <div class="worker-row">
-                <input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="13290 - Schär Romano" onchange="handleNewWorker(this); updateDriverSelects();" required>
+                <input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="13290 - Schär Romano" onchange="checkWorkerExists(this); updateDriverSelects();" required>
             </div>
         </div>
-        <button type="button" class="secondary" onclick="addWorkerField()">+ Name hinzufügen</button>
+        
+        <div class="worker-btn-row">
+            <button type="button" class="btn-add-worker" onclick="addWorkerField()">+ Name hinzufügen</button>
+            <button type="button" class="manage-btn-worker" onclick="openManageWorkersModal()">⚙️ Mitarbeiter verwalten</button>
+        </div>
         
         <div class="row" style="margin-top: 12px;">
             <div>
@@ -239,23 +398,29 @@
             <div>
                 <label>Soll-Arbeitszeit</label>
                 <select name="soll_zeit" id="sollZeitInput">
-                    <option value="8.00">8.00h (Winterzeit)</option>
-                    <option value="8.50">8.50h (Übergangszeit)</option>
-                    <option value="8.75">8.75h (Sommerzeit)</option>
+                    <option value="8.00">8.00h</option>
+                    <option value="8.50">8.50h</option>
+                    <option value="8.75">8.75h</option>
                 </select>
             </div>
         </div>
     </div>
 
+    <!-- Team-Einsätze -->
+    <h4 style="margin: 15px 0 5px 0; color:#0056b3;">1. Einsätze für das gesamte Team:</h4>
     <div id="entriesContainer">
         <div class="card entry-card">
             <div class="entry-header">
                 <h3>Einsatz 1</h3>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <button type="button" class="manage-btn-site" onclick="openManageSitesModal()">⚙️ Baustellen verwalten</button>
+                    <button type="button" class="btn-delete-entry" onclick="removeEntry(this)" style="display: none;">✕ Baustelle löschen</button>
+                </div>
             </div>
-            <label>Baustelle (Suchfeld)</label>
+            <label>Baustelle</label>
             <input type="text" name="baustelle[]" list="baustellen-liste" placeholder="Baustelle tippen..." onchange="handleBaustelleChange(this)" required>
             
-            <label>KTR (Kostenstelle)</label>
+            <label>KTR</label>
             <input type="text" name="ktr[]" placeholder="z. B. 51489" onchange="handleKTRChange(this)" required>
             
             <div class="time-block">
@@ -267,7 +432,7 @@
             </div>
 
             <div class="time-block">
-                <div class="time-title">Zeitfenster 2 (optional)</div>
+                <div class="time-title">Zeitfenster 2</div>
                 <div class="row">
                     <div><label>Von</label><input type="time" name="von2[]" onchange="calculateHours()"></div>
                     <div><label>Bis</label><input type="time" name="bis2[]" onchange="calculateHours()"></div>
@@ -275,7 +440,7 @@
             </div>
 
             <div class="time-block">
-                <div class="time-title">Zeitfenster 3 (optional)</div>
+                <div class="time-title">Zeitfenster 3</div>
                 <div class="row">
                     <div><label>Von</label><input type="time" name="von3[]" onchange="calculateHours()"></div>
                     <div><label>Bis</label><input type="time" name="bis3[]" onchange="calculateHours()"></div>
@@ -283,7 +448,7 @@
             </div>
 
             <div class="subtotal-box">
-                Stunden dieser Einsatz: <span class="site-hours">00:00</span> Std
+                Einsatz: <span class="site-hours">00:00</span> Std
             </div>
 
             <div class="row">
@@ -296,7 +461,7 @@
                     </select>
                 </div>
                 <div>
-                    <label>Reisezeit Fahrer Wert</label>
+                    <label>Reisezeit Fahrer</label>
                     <select name="rz_fahrer[]">
                         <option value="0">Keine</option>
                         <option value="0.5">Halbe (0.5)</option>
@@ -326,10 +491,15 @@
         </div>
     </div>
 
-    <button type="button" class="add" onclick="addEntry()">+ Weitere Baustelle hinzufügen</button>
+    <button type="button" class="add" onclick="addEntry()">+ Weitere Team-Baustelle hinzufügen</button>
+
+    <!-- Individuelle Abweichungen für einzelne Mitarbeiter -->
+    <h4 style="margin: 20px 0 5px 0; color:#d97706;">2. Individuelle Abweichungen / Absenzen (z.B. Krank / Unfall / Arzt):</h4>
+    <div id="customEntriesContainer"></div>
+    <button type="button" class="add-custom" onclick="addCustomEntry()">+ Einzelne Abweichung / Absenz erfassen</button>
 
     <div class="total-card">
-        <h3>Tagestotal:</h3>
+        <h3>Tagestotal (Team):</h3>
         <div class="hours"><span id="dayTotal">00:00</span> Std</div>
     </div>
 
@@ -357,6 +527,7 @@
 
 <script>
     let currentEditingArchiveId = null;
+    let pendingWorkerInputElement = null;
 
     document.getElementById('datumInput').valueAsDate = new Date();
 
@@ -374,16 +545,10 @@
         return stored ? JSON.parse(stored) : defaultKTRMapping;
     }
 
-    /* Automatische Bestimmung der Soll-Arbeitszeit gemäss Arbeitszeitkalender 2026 */
     function determineSollZeit(dateString) {
         if (!dateString) return "8.75";
         const date = new Date(dateString);
-        const month = date.getMonth() + 1; // 1 = Januar, 12 = Dezember
-        
-        // Gemäss PDF-Kalender:
-        // Dezember / Januar / Februar -> typischerweise Winterzeit (8.00h) bzw. Feiertage/Betriebsferien
-        // März, November -> Übergangszeiten (8.50h)
-        // April bis Oktober -> Sommerzeit (8.75h)
+        const month = date.getMonth() + 1;
         if (month === 12 || month === 1 || month === 2) {
             return "8.00";
         } else if (month === 3 || month === 11) {
@@ -421,15 +586,140 @@
         });
     }
 
-    function handleNewWorker(element) {
+    function checkWorkerExists(element) {
         const value = element.value.trim();
         if (!value) return;
 
         let savedWorkers = JSON.parse(localStorage.getItem('stundenkarte_mitarbeiter')) || defaultWorkers;
+        
         if (!savedWorkers.includes(value)) {
-            savedWorkers.push(value);
+            pendingWorkerInputElement = element;
+            document.getElementById('modalPersonalNr').value = '';
+            document.getElementById('modalWorkerName').value = value;
+            document.getElementById('workerModal').style.display = 'flex';
+            document.getElementById('modalPersonalNr').focus();
+        }
+    }
+
+    function closeWorkerModal() {
+        document.getElementById('workerModal').style.display = 'none';
+        if (pendingWorkerInputElement) {
+            pendingWorkerInputElement.value = "";
+            pendingWorkerInputElement = null;
+        }
+    }
+
+    function saveNewWorkerFromModal() {
+        const pNr = document.getElementById('modalPersonalNr').value.trim();
+        const wName = document.getElementById('modalWorkerName').value.trim();
+
+        if (!pNr || !wName) {
+            alert("Bitte sowohl Personalnummer als auch den Namen eingeben!");
+            return;
+        }
+
+        const combinedName = `${pNr} - ${wName}`;
+        let savedWorkers = JSON.parse(localStorage.getItem('stundenkarte_mitarbeiter')) || defaultWorkers;
+
+        if (!savedWorkers.includes(combinedName)) {
+            savedWorkers.push(combinedName);
             localStorage.setItem('stundenkarte_mitarbeiter', JSON.stringify(savedWorkers));
             loadSavedLists();
+        }
+
+        if (pendingWorkerInputElement) {
+            pendingWorkerInputElement.value = combinedName;
+            pendingWorkerInputElement = null;
+        }
+
+        document.getElementById('workerModal').style.display = 'none';
+        updateDriverSelects();
+    }
+
+    /* MITARBEITER VERWALTEN & LÖSCHEN */
+    function openManageWorkersModal() {
+        renderManageWorkersList();
+        document.getElementById('manageWorkersModal').style.display = 'flex';
+    }
+
+    function closeManageWorkersModal() {
+        document.getElementById('manageWorkersModal').style.display = 'none';
+    }
+
+    function renderManageWorkersList() {
+        let savedWorkers = JSON.parse(localStorage.getItem('stundenkarte_mitarbeiter')) || defaultWorkers;
+        const container = document.getElementById('manageWorkersList');
+        
+        if (savedWorkers.length === 0) {
+            container.innerHTML = '<div style="font-size:12px; color:#666; padding:8px;">Keine Mitarbeiter gespeichert.</div>';
+            return;
+        }
+
+        let html = '';
+        savedWorkers.forEach((w, index) => {
+            html += `
+                <div class="manage-item">
+                    <span>${w}</span>
+                    <button type="button" class="btn-delete-item" onclick="deleteWorkerFromStorage(${index})">🗑️ Löschen</button>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function deleteWorkerFromStorage(index) {
+        let savedWorkers = JSON.parse(localStorage.getItem('stundenkarte_mitarbeiter')) || defaultWorkers;
+        const workerToDelete = savedWorkers[index];
+
+        if (confirm(`Möchten Sie "${workerToDelete}" wirklich aus der Liste löschen?`)) {
+            savedWorkers.splice(index, 1);
+            localStorage.setItem('stundenkarte_mitarbeiter', JSON.stringify(savedWorkers));
+            loadSavedLists();
+            renderManageWorkersList();
+            updateDriverSelects();
+        }
+    }
+
+    /* BAUSTELLEN & KTR VERWALTEN & LÖSCHEN */
+    function openManageSitesModal() {
+        renderManageSitesList();
+        document.getElementById('manageSitesModal').style.display = 'flex';
+    }
+
+    function closeManageSitesModal() {
+        document.getElementById('manageSitesModal').style.display = 'none';
+    }
+
+    function renderManageSitesList() {
+        let ktrMap = getKTRMapping();
+        const container = document.getElementById('manageSitesList');
+        const sites = Object.keys(ktrMap);
+
+        if (sites.length === 0) {
+            container.innerHTML = '<div style="font-size:12px; color:#666; padding:8px;">Keine Baustellen gespeichert.</div>';
+            return;
+        }
+
+        let html = '';
+        sites.forEach(site => {
+            const ktr = ktrMap[site];
+            html += `
+                <div class="manage-item">
+                    <div><strong>${site}</strong><br><span style="color:#666; font-size:11px;">KTR: ${ktr}</span></div>
+                    <button type="button" class="btn-delete-item" onclick="deleteSiteFromStorage('${site.replace(/'/g, "\\'")}')">🗑️ Löschen</button>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function deleteSiteFromStorage(site) {
+        if (confirm(`Möchten Sie die Baustelle "${site}" wirklich löschen?`)) {
+            let ktrMap = getKTRMapping();
+            delete ktrMap[site];
+            localStorage.setItem('stundenkarte_ktr_mapping', JSON.stringify(ktrMap));
+            loadSavedLists();
+            renderManageSitesList();
         }
     }
 
@@ -455,8 +745,8 @@
         const selectedSite = element.value.trim();
         if (!selectedSite) return;
 
-        const entryCard = element.closest('.entry-card');
-        const ktrInput = entryCard.querySelector('input[name="ktr[]"]');
+        const entryCard = element.closest('.entry-card, .custom-entry-card');
+        const ktrInput = entryCard.querySelector('input[name="ktr[]"], input[name="custom_ktr[]"]');
         const ktrMap = getKTRMapping();
 
         if (ktrMap[selectedSite]) {
@@ -469,8 +759,8 @@
     }
 
     function handleKTRChange(element) {
-        const entryCard = element.closest('.entry-card');
-        const baustelleInput = entryCard.querySelector('input[name="baustelle[]"]');
+        const entryCard = element.closest('.entry-card, .custom-entry-card');
+        const baustelleInput = entryCard.querySelector('input[name="baustelle[]"], input[name="custom_baustelle[]"]');
         const site = baustelleInput.value.trim();
         const ktr = element.value.trim();
 
@@ -491,7 +781,7 @@
         const div = document.createElement('div');
         div.className = 'worker-row';
         div.innerHTML = `
-            <input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="${val}" placeholder="Name tippen..." onchange="handleNewWorker(this); updateDriverSelects();" required>
+            <input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="${val}" placeholder="Name tippen..." onchange="checkWorkerExists(this); updateDriverSelects();" required>
             <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updateDriverSelects();">✕</button>
         `;
         container.appendChild(div);
@@ -507,7 +797,10 @@
         newEntry.innerHTML = `
             <div class="entry-header">
                 <h3>Einsatz ${count}</h3>
-                <button type="button" class="btn-delete-entry" onclick="removeEntry(this)">✕ Baustelle löschen</button>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <button type="button" class="manage-btn-site" onclick="openManageSitesModal()" style="display: none;">⚙️ Baustellen verwalten</button>
+                    <button type="button" class="btn-delete-entry" onclick="removeEntry(this)">✕ Baustelle löschen</button>
+                </div>
             </div>
             <label>Baustelle (Suchfeld)</label>
             <input type="text" name="baustelle[]" list="baustellen-liste" value="${data ? data.baustelle || '' : ''}" placeholder="Baustelle tippen..." onchange="handleBaustelleChange(this)" required>
@@ -535,7 +828,7 @@
                     <div><label>Bis</label><input type="time" name="bis3[]" value="${data ? data.bis3 || '' : ''}" onchange="calculateHours()"></div>
                 </div>
             </div>
-            <div class="subtotal-box">Stunden dieser Einsatz: <span class="site-hours">00:00</span> Std</div>
+            <div class="subtotal-box">Einsatz: <span class="site-hours">00:00</span> Std</div>
             <div class="row">
                 <div>
                     <label>Reisezeit (RZ)</label>
@@ -583,6 +876,42 @@
         calculateHours();
     }
 
+    function addCustomEntry(data = null) {
+        const container = document.getElementById('customEntriesContainer');
+        const newEntry = document.createElement('div');
+        newEntry.className = 'card custom-card custom-entry-card';
+        newEntry.innerHTML = `
+            <div class="entry-header">
+                <h3 style="color:#d97706; margin:0;">⚠️ Einzelne Abweichung</h3>
+                <button type="button" class="btn-delete-entry" onclick="this.closest('.custom-entry-card').remove(); calculateHours();">✕ Entfernen</button>
+            </div>
+            
+            <label style="color:#d97706;">Mitarbeiter auswählen (oder tippen):</label>
+            <input type="text" name="custom_worker[]" list="mitarbeiter-liste" value="${data ? data.worker || '' : ''}" placeholder="Mitarbeiter wählen..." onchange="checkWorkerExists(this)" required>
+
+            <label>Baustelle / Text</label>
+            <input type="text" name="custom_baustelle[]" list="baustellen-liste" value="${data ? data.baustelle || '' : ''}" placeholder="z. B. Arzt / Krank / Spezial" onchange="handleBaustelleChange(this)">
+            
+            <label>KTR (Kostenstelle)</label>
+            <input type="text" name="custom_ktr[]" value="${data ? data.ktr || '' : ''}" placeholder="z. B. 51489" onchange="handleKTRChange(this)">
+            
+            <div class="time-block">
+                <div class="time-title">Zeitfenster</div>
+                <div class="row">
+                    <div><label>Von</label><input type="time" name="custom_von1[]" value="${data ? data.von1 || '' : ''}" onchange="calculateHours()"></div>
+                    <div><label>Bis</label><input type="time" name="custom_bis1[]" value="${data ? data.bis1 || '' : ''}" onchange="calculateHours()"></div>
+                </div>
+            </div>
+
+            <div class="subtotal-box">Stunden: <span class="site-hours">00:00</span> Std</div>
+            
+            <label>Begründung / Code (z. B. KR, UN, BA, FE, MI, SK)</label>
+            <input type="text" name="custom_begruendung[]" value="${data ? data.begruendung || '' : ''}" placeholder="z. B. KR (für Krank)">
+        `;
+        container.appendChild(newEntry);
+        calculateHours();
+    }
+
     function removeEntry(button) {
         const container = document.getElementById('entriesContainer');
         const cards = container.querySelectorAll('.entry-card');
@@ -603,6 +932,17 @@
             const header = card.querySelector('.entry-header h3');
             if (header) {
                 header.textContent = `Einsatz ${index + 1}`;
+            }
+
+            const manageBtn = card.querySelector('.manage-btn-site');
+            const deleteBtn = card.querySelector('.btn-delete-entry');
+
+            if (index === 0) {
+                if (manageBtn) manageBtn.style.display = 'inline-block';
+                if (deleteBtn) deleteBtn.style.display = 'none';
+            } else {
+                if (manageBtn) manageBtn.style.display = 'none';
+                if (deleteBtn) deleteBtn.style.display = 'inline-block';
             }
         });
     }
@@ -626,6 +966,21 @@
             const siteHoursSpan = card.querySelector('.site-hours');
             if (siteHoursSpan) siteHoursSpan.textContent = formatMinutesToHHMM(cardMinutes);
             grandTotalMinutes += cardMinutes;
+        });
+
+        const customCards = document.querySelectorAll('.custom-entry-card');
+        customCards.forEach(card => {
+            let cardMinutes = 0;
+            const von = card.querySelector('input[name="custom_von1[]"]')?.value;
+            const bis = card.querySelector('input[name="custom_bis1[]"]')?.value;
+            if (von && bis) {
+                const [vH, vM] = von.split(':').map(Number);
+                const [bH, bM] = bis.split(':').map(Number);
+                let diff = (bH * 60 + bM) - (vH * 60 + vM);
+                if (diff > 0) cardMinutes += diff;
+            }
+            const siteHoursSpan = card.querySelector('.site-hours');
+            if (siteHoursSpan) siteHoursSpan.textContent = formatMinutesToHHMM(cardMinutes);
         });
 
         document.getElementById('dayTotal').textContent = formatMinutesToHHMM(grandTotalMinutes);
@@ -687,11 +1042,30 @@
             });
         });
 
+        const customCards = document.querySelectorAll('.custom-entry-card');
+        const customEinsaetze = [];
+
+        customCards.forEach(card => {
+            const worker = card.querySelector('input[name="custom_worker[]"]').value;
+            if (worker) {
+                customEinsaetze.push({
+                    worker: worker,
+                    baustelle: card.querySelector('input[name="custom_baustelle[]"]').value,
+                    ktr: card.querySelector('input[name="custom_ktr[]"]').value,
+                    von1: card.querySelector('input[name="custom_von1[]"]').value,
+                    bis1: card.querySelector('input[name="custom_bis1[]"]').value,
+                    begruendung: card.querySelector('input[name="custom_begruendung[]"]').value,
+                    stundenText: card.querySelector('.site-hours').textContent
+                });
+            }
+        });
+
         return {
             datum: datum,
             sollZeit: sollZeit,
             arbeiter: workers,
             einsaetze: einsaetze,
+            customEinsaetze: customEinsaetze,
             tagestotalMinutes: calculateHours()
         };
     }
@@ -709,7 +1083,7 @@
             container.innerHTML = '';
             data.arbeiter.forEach((w, idx) => {
                 if (idx === 0) {
-                    container.innerHTML = `<div class="worker-row"><input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="${w}" onchange="handleNewWorker(this); updateDriverSelects();" required></div>`;
+                    container.innerHTML = `<div class="worker-row"><input type="text" name="arbeiter[]" list="mitarbeiter-liste" value="${w}" onchange="checkWorkerExists(this); updateDriverSelects();" required></div>`;
                 } else {
                     addWorkerField(w);
                 }
@@ -723,6 +1097,15 @@
                 addEntry(e);
             });
         }
+
+        const customContainer = document.getElementById('customEntriesContainer');
+        customContainer.innerHTML = '';
+        if (data.customEinsaetze && data.customEinsaetze.length > 0) {
+            data.customEinsaetze.forEach(ce => {
+                addCustomEntry(ce);
+            });
+        }
+
         updateDriverSelects();
         calculateHours();
     }
@@ -784,6 +1167,8 @@
         const timeInputs = document.querySelectorAll('input[type="time"]');
         timeInputs.forEach(input => input.value = '');
 
+        document.getElementById('customEntriesContainer').innerHTML = '';
+
         if (!copyChecked) {
             const cards = document.querySelectorAll('.entry-card');
             cards.forEach((card, index) => {
@@ -814,10 +1199,11 @@
 
         let html = '';
         weekData.forEach((day, index) => {
+            const hasCustom = day.customEinsaetze && day.customEinsaetze.length > 0;
             html += `
                 <div class="day-list-item">
                     <div>
-                        <strong>${formatDateToDMY(day.datum)}</strong> (Soll: ${day.sollZeit || '8.75'}h, ${day.einsaetze.length} Einsatz/Einsätze)
+                        <strong>${formatDateToDMY(day.datum)}</strong> (Soll: ${day.sollZeit || '8.75'}h, ${day.einsaetze.length} Team-Einsatz/Einsätze ${hasCustom ? '⚠️ Absenz/Abweichung' : ''})
                     </div>
                     <div>
                         <strong>${formatMinutesToDecimal(day.tagestotalMinutes)} Std</strong> 
@@ -838,7 +1224,6 @@
         renderSavedDays();
     }
 
-    /* DIGITALES ARCHIV SPEICHERN, LADEN & BEARBEITEN */
     function archiveCurrentWeek(weekData, overwriteId = null) {
         if (!weekData || weekData.length === 0) return;
         let archive = JSON.parse(localStorage.getItem('stundenkarte_archiv') || '[]');
@@ -966,12 +1351,16 @@
         return { von, bis, minutes, type };
     }
 
-    /* PDF GENERIERUNG IM QUERFORMAT UND GHELMA LAYOUT */
     function generatePDFsFromData(weekData) {
         let allWorkersSet = new Set();
         weekData.forEach(day => {
             if (day.arbeiter && Array.isArray(day.arbeiter)) {
                 day.arbeiter.forEach(w => allWorkersSet.add(w));
+            }
+            if (day.customEinsaetze && Array.isArray(day.customEinsaetze)) {
+                day.customEinsaetze.forEach(ce => {
+                    if (ce.worker) allWorkersSet.add(ce.worker);
+                });
             }
         });
         const allWorkersArray = Array.from(allWorkersSet);
@@ -995,15 +1384,69 @@
             doc.text("von Bergen Chantal", 230, 20);
 
             let tableRows = [];
-            let totalWeekMinutes = 0;
 
             weekData.forEach(day => {
-                if (day.arbeiter && day.arbeiter.includes(workerName)) {
-                    const tagNumber = day.datum.split('-')[2];
-                    const rowCount = day.einsaetze.length;
-                    const daySoll = day.sollZeit || '8.75';
+                const tagNumber = day.datum ? day.datum.split('-')[2] : '';
+                const daySoll = day.sollZeit || '8.75';
 
-                    day.einsaetze.forEach((e, index) => {
+                let workerTeamEntries = [];
+                if (day.arbeiter && day.arbeiter.includes(workerName)) {
+                    workerTeamEntries = day.einsaetze || [];
+                }
+
+                let workerCustomEntries = (day.customEinsaetze || []).filter(ce => ce.worker === workerName);
+
+                let combinedRowsData = [];
+
+                workerTeamEntries.forEach(e => {
+                    let teamMin = 0;
+                    for (let i = 1; i <= 3; i++) {
+                        if (e[`von${i}`] && e[`bis${i}`]) {
+                            let diff = timeToMinutes(e[`bis${i}`]) - timeToMinutes(e[`von${i}`]);
+                            if (diff > 0) teamMin += diff;
+                        }
+                    }
+                    combinedRowsData.push({
+                        baustelle: e.baustelle,
+                        ktr: e.ktr,
+                        von1: e.von1, bis1: e.bis1,
+                        von2: e.von2, bis2: e.bis2,
+                        von3: e.von3, bis3: e.bis3,
+                        mittagszulage: e.mittagszulage,
+                        reisezeit: e.reisezeit,
+                        rz_fahrer: e.rz_fahrer,
+                        fahrer_person: e.fahrer_person,
+                        begruendung: e.begruendung,
+                        minutes: teamMin
+                    });
+                });
+
+                workerCustomEntries.forEach(ce => {
+                    let customMin = 0;
+                    if (ce.von1 && ce.bis1) {
+                        let diff = timeToMinutes(ce.bis1) - timeToMinutes(ce.von1);
+                        if (diff > 0) customMin += diff;
+                    }
+                    combinedRowsData.push({
+                        baustelle: ce.baustelle,
+                        ktr: ce.ktr,
+                        von1: ce.von1, bis1: ce.bis1,
+                        von2: '', bis2: '',
+                        von3: '', bis3: '',
+                        mittagszulage: 'Nein',
+                        reisezeit: '0',
+                        rz_fahrer: '0',
+                        fahrer_person: '',
+                        begruendung: ce.begruendung,
+                        minutes: customMin
+                    });
+                });
+
+                if (combinedRowsData.length > 0) {
+                    let totalDayMin = combinedRowsData.reduce((sum, r) => sum + r.minutes, 0);
+                    let rowCount = combinedRowsData.length;
+
+                    combinedRowsData.forEach((item, index) => {
                         let row = [];
 
                         if (index === 0) {
@@ -1014,21 +1457,18 @@
                             });
                         }
 
-                        row.push(e.baustelle || '');
-                        row.push(e.ktr || '');
+                        row.push(item.baustelle || '');
+                        row.push(item.ktr || '');
 
                         let times = [
-                            categorizeTimeWindow(e.von1, e.bis1),
-                            categorizeTimeWindow(e.von2, e.bis2),
-                            categorizeTimeWindow(e.von3, e.bis3)
+                            categorizeTimeWindow(item.von1, item.bis1),
+                            categorizeTimeWindow(item.von2, item.bis2),
+                            categorizeTimeWindow(item.von3, item.bis3)
                         ].filter(t => t !== null);
 
                         times.sort((a, b) => a.minutes - b.minutes);
 
-                        let mo1 = null;
-                        let vm1 = null;
-                        let nm1 = null;
-
+                        let mo1 = null, vm1 = null, nm1 = null;
                         let nachmittagTimes = times.filter(t => t.type === 'nachmittag');
                         if (nachmittagTimes.length >= 2 && !times.some(t => t.type === 'vormittag')) {
                             nachmittagTimes[0].type = 'vormittag';
@@ -1040,28 +1480,23 @@
                             else if (t.type === 'nachmittag' && !nm1) nm1 = t;
                         });
 
-                        row.push(mo1 ? mo1.von : ''); 
-                        row.push(mo1 ? mo1.bis : '');
-
-                        row.push(vm1 ? vm1.von : ''); 
-                        row.push(vm1 ? vm1.bis : '');
-
-                        row.push(nm1 ? nm1.von : ''); 
-                        row.push(nm1 ? nm1.bis : '');
+                        row.push(mo1 ? mo1.von : ''); row.push(mo1 ? mo1.bis : '');
+                        row.push(vm1 ? vm1.von : ''); row.push(vm1 ? vm1.bis : '');
+                        row.push(nm1 ? nm1.von : ''); row.push(nm1 ? nm1.bis : '');
 
                         if (index === 0) {
                             row.push({
-                                content: formatMinutesToDecimal(day.tagestotalMinutes),
+                                content: formatMinutesToDecimal(totalDayMin),
                                 rowSpan: rowCount,
                                 styles: { valign: 'middle', halign: 'center', fontStyle: 'bold' }
                             });
                         }
 
-                        row.push(e.mittagszulage === 'Ja' ? '1' : '');
-                        row.push(e.reisezeit !== '0' ? e.reisezeit : '');
+                        row.push(item.mittagszulage === 'Ja' ? '1' : '');
+                        row.push(item.reisezeit !== '0' ? item.reisezeit : '');
 
-                        let isDriver = (e.fahrer_person === workerName);
-                        let rzFahrerVal = (isDriver && e.rz_fahrer !== '0') ? e.rz_fahrer : '';
+                        let isDriver = (item.fahrer_person === workerName);
+                        let rzFahrerVal = (isDriver && item.rz_fahrer !== '0') ? item.rz_fahrer : '';
                         row.push(rzFahrerVal);
 
                         if (index === 0) {
@@ -1072,18 +1507,14 @@
                             });
                         }
 
-                        row.push(e.begruendung || '');
+                        row.push(item.begruendung || '');
 
                         if (index === 0) {
-                            row.push({
-                                content: '',
-                                rowSpan: rowCount
-                            });
+                            row.push({ content: '', rowSpan: rowCount });
                         }
 
                         tableRows.push(row);
                     });
-                    totalWeekMinutes += day.tagestotalMinutes;
                 }
             });
 
@@ -1112,13 +1543,7 @@
                 body: tableRows,
                 theme: 'grid',
                 styles: { fontSize: 8, cellPadding: 1, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8, alignment: 'center' },
-                columnStyles: {
-                    10: { cellWidth: 'auto' }, 
-                    11: { cellWidth: 'auto' }, 
-                    12: { cellWidth: 'auto' }, 
-                    13: { cellWidth: 'auto' }  
-                }
+                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8, alignment: 'center' }
             });
 
             let currentY = doc.lastAutoTable.finalY + 4;
@@ -1144,7 +1569,7 @@
                 }
             });
 
-            let pNr = workerName.split(' - ')[0] || '';
+            let pNr = workerName.path ? '' : (workerName.split(' - ')[0] || '');
             let fullName = workerName.split(' - ')[1] || workerName;
             let parts = fullName.split(' ');
             let nachname = parts[0] || '';
@@ -1168,11 +1593,35 @@
             doc.text(":", xLabelRight, 197);
             doc.text(nachname, xValueLeft, 197);
 
-            const cleanWorkerName = workerName.replace(/[^a-zA-Z0-9]/g, "_");
-            doc.save(`Stundenkarte_${cleanWorkerName}.pdf`);
+            const cleanWorkerName = workerName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_");
+            const fileName = `Stundenkarte${cleanWorkerName}.pdf`;
+
+            const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+            if (window.Capacitor && window.Capacitor.Plugins.Filesystem) {
+                const { Filesystem } = window.Capacitor.Plugins;
+                Filesystem.writeFile({
+                    path: fileName,
+                    data: pdfBase64,
+                    directory: 'CACHE', 
+                    recursive: true
+                }).then((result) => {
+                    alert(`✅ PDF erfolgreich auf dem Handy gespeichert unter:\n${fileName}`);
+                    if (window.Capacitor.Plugins.Share) {
+                        window.Capacitor.Plugins.Share.share({
+                            title: fileName,
+                            url: result.uri,
+                        });
+                    }
+                }).catch((err) => {
+                    alert("Speicherfehler: " + err.message);
+                });
+            } else {
+                doc.save(fileName);
+            }
         });
 
-        alert(`Es wurden ${allWorkersArray.length} PDF(s) im Querformat generiert.`);
+        alert(`Es wurden ${allWorkersArray.length} PDF(s) generiert.`);
     }
 
     function finishWeekAndGeneratePDFs() {
